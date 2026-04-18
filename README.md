@@ -52,7 +52,7 @@ We record a comprehensive suite of metrics for component-level evaluation:
 
 ## Usage
 
-You can reproduce the unified foundational dataset and run the initial persistence baseline experiment by using the following commands:
+You can reproduce the unified foundational dataset and run the baseline experiments by using the following commands:
 
 ```bash
 # 1. Unify and standardize the raw CSV data
@@ -60,10 +60,23 @@ python3 src/preprocessing/build_unified_pm10_dataset.py
 
 # 2. Run the naive tracking baseline and calculate metric tables
 python3 experiments/run_paper_c_baseline.py
+
+# 3. Run the rolling-origin ARIMA baseline (directly comparable to persistence)
+python3 experiments/run_paper_c_arima.py
 ```
+
+The ARIMA experiment uses the same rolling-origin protocol as the persistence
+baseline (identical folds, identical train-only logic, identical horizons
+`[1, 6, 12, 24]`). A fixed, conservative configuration `ARIMA(2, 1, 2)` is
+fitted once per station and per fold on the corresponding training window
+only — no seasonal terms, no auto-search — and forecasts are produced for
+each required horizon. The persistence baseline remains available and
+unchanged; skill scores are still referenced against it.
 
 ## Output Files
 
-Executing the baseline script will automatically generate the following diagnostic artifacts in the `results/` directory:
-- `results/metrics_baseline_by_horizon.csv`: Tabular overview mapping all metrics (RMSE, Skill, VR, KGE components) per station and horizon.
+Executing the baseline scripts will automatically generate the following diagnostic artifacts in the `results/` directory:
+- `results/metrics_baseline_by_horizon.csv`: Tabular overview mapping all metrics (RMSE, Skill, VR, KGE components) per station and horizon for the persistence baseline.
 - `results/predictions_baseline.csv`: Raw out-of-sample persistence predictions logged alongside the true ground values.
+- `results/metrics_arima_by_horizon.csv`: Same metric schema as the persistence baseline, computed for the rolling-origin ARIMA model and therefore directly comparable.
+- `results/predictions_arima.csv`: Per-fold ARIMA point forecasts with the matching persistence forecast and true value on each row.

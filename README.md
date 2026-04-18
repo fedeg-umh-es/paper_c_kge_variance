@@ -63,6 +63,9 @@ python3 experiments/run_paper_c_baseline.py
 
 # 3. Run the rolling-origin ARIMA baseline (directly comparable to persistence)
 python3 experiments/run_paper_c_arima.py
+
+# 4. Build the ARIMA-vs-persistence summary table and automatic findings
+python3 experiments/build_paper_c_arima_summary.py
 ```
 
 The ARIMA experiment uses the same rolling-origin protocol as the persistence
@@ -80,3 +83,5 @@ Executing the baseline scripts will automatically generate the following diagnos
 - `results/predictions_baseline.csv`: Raw out-of-sample persistence predictions logged alongside the true ground values.
 - `results/metrics_arima_by_horizon.csv`: Same metric schema as the persistence baseline, computed for the rolling-origin ARIMA model and therefore directly comparable.
 - `results/predictions_arima.csv`: Per-fold ARIMA point forecasts with the matching persistence forecast and true value on each row.
+- `results/paper_c_arima_vs_persistence_summary.csv`: Wide-format side-by-side table merging the persistence and ARIMA metrics by `(station, horizon)` with derived flags (`delta_rmse`, `better_than_persistence`, `variance_collapse_flag`, `severe_variance_collapse_flag`, `overdispersion_flag`).
+- `results/paper_c_arima_key_findings.txt`: Short auto-generated per-station reading highlighting where ARIMA improves RMSE, where variance collapses, where both happen simultaneously, and where ARIMA adds no skill.

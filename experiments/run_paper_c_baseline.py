@@ -20,8 +20,8 @@ def run_baseline_experiment():
     df = pd.read_csv(data_path, parse_dates=["timestamp"])
     
     horizons = [1, 6, 12, 24]
-    n_folds = 16
-    min_train_size = 8760
+    n_folds = 8
+    min_train_size = 2160
     
     all_metrics = []
     all_preds = []

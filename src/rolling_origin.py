@@ -65,11 +65,12 @@ def generate_folds(
 
     required = min_train_size + max_horizon + n_folds
     if T < required:
-        raise ValueError(
-            f"Series too short: T={T}, need at least {required} observations "
-            f"for {n_folds} folds with min_train_size={min_train_size} "
-            f"and max_horizon={max_horizon}."
+        msg = (
+            f"Configuration Conflict: series length (T={T}) is insufficient. "
+            f"Requires at least {required} observations to satisfy constraints: "
+            f"min_train_size={min_train_size}, max_horizon={max_horizon}, n_folds={n_folds}."
         )
+        raise ValueError(msg)
 
     step = (T - min_train_size - max_horizon) // n_folds
 

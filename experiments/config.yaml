@@ -1,0 +1,15 @@
+station_codes:
+  - ES1422A   # Madrid Plaza de España
+  - ES1938A   # Madrid Escuelas Aguirre
+  - ES1942A   # Madrid Arturo Soria
+
+pollutant: PM10
+year_start: 2019
+year_end: 2022
+
+horizons: [1, 6, 12, 24]
+n_folds: 16
+min_train_size: 8760   # ~1 year of hourly data
+
+random_seed: 42
+models: [persistence, arima, lstm, lgbm]

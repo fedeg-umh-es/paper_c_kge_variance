@@ -1,0 +1,286 @@
+\documentclass[11pt,a4paper]{article}
+
+% ── Packages ──────────────────────────────────────────────────────────────────
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{adjustbox}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{microtype}
+\usepackage{xcolor}
+
+\geometry{margin=2.5cm}
+
+% ── Title block ───────────────────────────────────────────────────────────────
+\title{KGE-Based Diagnostic Framework for Variance Collapse Detection\\
+       in Multi-Horizon PM$_{10}$ Forecasting}
+
+\author{Francisco Federico Garcia Crespi\\
+        \small Universidad Miguel Hern\'andez de Elche\\
+        \small \texttt{fedeg@umh.es}}
+
+\date{}
+
+% ──────────────────────────────────────────────────────────────────────────────
+\begin{document}
+\maketitle
+
+% ── Abstract ──────────────────────────────────────────────────────────────────
+\begin{abstract}
+Multi-horizon forecasting of particulate matter (PM$_{10}$) concentrations
+is a critical task for air-quality management, yet conventional accuracy
+metrics such as RMSE fail to diagnose \emph{variance collapse} — the
+systematic underdispersion that afflicts many machine-learning models at
+longer lead times.
+%
+We propose a diagnostic framework grounded in the Kling-Gupta Efficiency
+(KGE) decomposition~\citep{gupta2009} that separates forecast error into
+three interpretable components: correlation ($r$), variability ($\alpha$),
+and bias ($\beta$).
+%
+We introduce \emph{Variance Retention} (VR) as an explicit diagnostic, and
+combine it with the RMSE-based skill score into a composite diagnostic
+indicator (Skill$_{\mathrm{VP}}$) that penalises skill claims made by
+variance-collapsed models.
+%
+Experiments are conducted on hourly PM$_{10}$ records from three EEA
+monitoring stations in Madrid (2019–2022) under a strictly leakage-free
+rolling-origin evaluation protocol.
+%
+Four forecasting strategies are benchmarked: persistence, ARIMA, LSTM, and
+LightGBM, at horizons $h \in \{1, 6, 12, 24\}$~h.
+%
+Results show that \ldots [TO BE COMPLETED].
+
+\medskip
+\noindent\textbf{Keywords:} air quality forecasting, PM$_{10}$, KGE, variance
+collapse, rolling-origin cross-validation, multi-horizon forecasting,
+machine learning.
+\end{abstract}
+
+% ── 1. Introduction ───────────────────────────────────────────────────────────
+\section{Introduction}\label{sec:intro}
+
+Air pollution forecasting is a central tool for environmental health
+management~\citep{WHO2021}.
+Hourly predictions of PM$_{10}$ concentrations at 1-h to 24-h lead times
+directly inform short-term advisory systems, yet reliable evaluation
+remains methodologically challenging.
+
+Evaluation frameworks for time-series forecasting typically rely on RMSE or
+MAE, which measure average accuracy but are insensitive to the statistical
+spread of predictions.
+A model that always predicts the climatological mean may achieve competitive
+RMSE while exhibiting zero predictive variance — a pathology known as
+\emph{variance collapse}~\citep{Gneiting2007}.
+This failure mode is particularly common in neural-network and
+gradient-boosting regressors at longer horizons.
+
+The Kling-Gupta Efficiency (KGE)~\citep{gupta2009}, originally developed for
+hydrological streamflow forecasting, decomposes the forecast-observation
+relationship into three orthogonal components.
+Unlike RMSE, KGE penalises models whose variability ($\alpha$ component)
+deviates from 1.0, making it inherently sensitive to variance collapse.
+
+\paragraph{Contributions.}
+\begin{enumerate}
+  \item A diagnostic framework that applies KGE decomposition to multi-horizon
+        PM$_{10}$ forecasting to detect variance collapse (Section~\ref{sec:method}).
+  \item A formal definition of Variance Retention (VR) as a standalone
+        diagnostic (Section~\ref{sec:vr}).
+  \item Skill$_{\mathrm{VP}}$: a composite diagnostic that couples RMSE skill
+        and VR (Section~\ref{sec:skillvp}).
+  \item Empirical evaluation on Madrid EEA data under a leakage-free rolling-
+        origin protocol (Section~\ref{sec:exp}).
+\end{enumerate}
+
+% ── 2. Related Work ───────────────────────────────────────────────────────────
+\section{Related Work}\label{sec:related}
+
+\subsection{Multi-horizon air quality forecasting}
+
+[TODO: review of PM10 forecasting literature — ARIMA, gradient boosting, LSTM]
+
+\subsection{Evaluation of probabilistic and deterministic forecasts}
+
+[TODO: proper scoring rules, CRPS, NRG, skill scores, variance diagnostics]
+
+\subsection{Rolling-origin evaluation}
+
+[TODO: Tashman 2000, Bergmeir 2018 on leakage in time-series cross-validation]
+
+\subsection{KGE in hydrology and beyond}
+
+[TODO: Gupta 2009, Knoben 2019, applications outside hydrology]
+
+% ── 3. Methodology ────────────────────────────────────────────────────────────
+\section{Methodology}\label{sec:method}
+
+\subsection{Rolling-Origin Evaluation Protocol}\label{sec:protocol}
+
+Let $\{x_t\}_{t=1}^{T}$ denote the full hourly PM$_{10}$ series.
+We partition it into $K=16$ rolling-origin folds as follows.
+The $k$-th fold ($k=0,\ldots,K-1$) uses a training window
+$\mathcal{T}_k = \{x_t : t \le n_k\}$ of size
+$n_k = n_{\min} + k \cdot \lfloor(T - n_{\min} - h_{\max})/K\rfloor$,
+where $n_{\min} = 8760$ (one year of hourly data).
+For each horizon $h \in \mathcal{H} = \{1, 6, 12, 24\}$, the test target is
+$x_{n_k + h}$, which is strictly outside $\mathcal{T}_k$.
+
+\emph{Leakage-free preprocessing}: all data transformations (scaling,
+imputation) are fitted exclusively on $\mathcal{T}_k$ and applied to the
+test target using the training-fitted parameters.
+No information from future time points enters any fold's training stage.
+
+\subsection{KGE Decomposition}\label{sec:kge}
+
+The Kling-Gupta Efficiency~\citep{gupta2009} is defined as:
+\begin{equation}
+  \mathrm{KGE} = 1 - \sqrt{(r-1)^2 + (\alpha-1)^2 + (\beta-1)^2},
+  \label{eq:kge}
+\end{equation}
+where, given observed values $\mathbf{o}$ and forecast values $\mathbf{f}$:
+\begin{align}
+  r      &= \operatorname{Corr}(\mathbf{o},\mathbf{f}), \label{eq:r}\\
+  \alpha &= \frac{\sigma_f}{\sigma_o}, \label{eq:alpha}\\
+  \beta  &= \frac{\mu_f}{\mu_o}. \label{eq:beta}
+\end{align}
+A perfect forecast achieves $r = \alpha = \beta = 1$ and
+$\mathrm{KGE} = 1$.
+Values below $-0.41$ indicate performance worse than the climatological
+mean~\citep{Knoben2019}.
+
+\subsection{Variance Retention}\label{sec:vr}
+
+The variability component $\alpha$ in Eq.~\eqref{eq:alpha} is equivalent
+to the square root of the ratio of predicted to observed variance.
+We define \emph{Variance Retention} (VR) as:
+\begin{equation}
+  \mathrm{VR} = \frac{\operatorname{Var}(\mathbf{f})}{\operatorname{Var}(\mathbf{o})}
+               = \alpha^2.
+  \label{eq:vr}
+\end{equation}
+VR$<1$ indicates underdispersion; VR$>1$ indicates overdispersion.
+A model suffering complete variance collapse has VR$\approx 0$.
+
+\subsection{RMSE Skill Score}\label{sec:skill}
+
+\begin{equation}
+  \mathrm{Skill}_{\mathrm{RMSE}} = 1 - \frac{\mathrm{RMSE}_{\mathrm{model}}}
+                                            {\mathrm{RMSE}_{\mathrm{persistence}}}.
+  \label{eq:skill}
+\end{equation}
+
+Positive values indicate improvement over persistence.
+
+\subsection{Skill$_{\mathrm{VP}}$ Diagnostic}\label{sec:skillvp}
+
+A model may report high Skill$_{\mathrm{RMSE}}$ yet exhibit severe variance
+collapse, which is undetectable by the skill score alone.
+We define the \emph{Variance-Penalised Skill} as:
+\begin{equation}
+  \mathrm{Skill}_{\mathrm{VP}} = \mathrm{Skill}_{\mathrm{RMSE}}
+                                 \cdot \min(1,\,\mathrm{VR}).
+  \label{eq:skillvp}
+\end{equation}
+When VR$\ge 1$ the penalty is inactive.
+When VR$<1$ the skill is deflated proportionally to the degree of
+underdispersion.
+This is a \emph{diagnostic} composite rather than a standalone metric,
+designed to reveal discrepancies between accuracy and calibration.
+
+% ── 4. Experimental Setup ─────────────────────────────────────────────────────
+\section{Experimental Setup}\label{sec:exp}
+
+\subsection{Data}
+
+Hourly PM$_{10}$ measurements for the period 2019–2022 were obtained from
+the European Environment Agency (EEA) e-Reporting database for three Madrid
+monitoring stations: ES1422A (Plaza de Espa\~na), ES1938A (Escuelas
+Aguirre), and ES1942A (Arturo Soria).
+Coverage statistics are reported in Table~\ref{tab:data}.
+
+\begin{table}[H]
+  \centering
+  \caption{Dataset coverage statistics.}
+  \label{tab:data}
+  % \input{../results/tables/data_coverage.tex}
+  [PLACEHOLDER — replace with \texttt{\textbackslash input\{results/tables/data\_coverage.tex\}}]
+\end{table}
+
+\subsection{Models}
+
+[TODO: brief description of each model and hyperparameters]
+
+\subsection{Evaluation}
+
+[TODO: horizon profile computation, averaging over folds and stations]
+
+% ── 5. Results ────────────────────────────────────────────────────────────────
+\section{Results}\label{sec:results}
+
+\subsection{Accuracy profiles}
+
+\begin{table}[H]
+  \centering
+  \caption{Full metric comparison averaged over 16 folds and 3 stations.}
+  \label{tab:full}
+  % \input{../results/tables/full_comparison_latex.tex}
+  [PLACEHOLDER]
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  % \includegraphics[width=0.8\linewidth]{../results/figures/skill_rmse.pdf}
+  \caption{Skill$_{\mathrm{RMSE}}$ profiles by forecast horizon.}
+  \label{fig:skill_rmse}
+\end{figure}
+
+\subsection{Variance collapse analysis}
+
+\begin{figure}[H]
+  \centering
+  % \includegraphics[width=0.9\linewidth]{../results/figures/variance_retention.pdf}
+  \caption{Variance Retention (VR) by forecast horizon.
+           Dashed line at VR$=1$ marks the collapse threshold.}
+  \label{fig:vr}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  % \includegraphics[width=\linewidth]{../results/figures/kge_components.pdf}
+  \caption{KGE component profiles: $r$ (correlation), $\alpha$ (variability),
+           $\beta$ (bias) by forecast horizon.}
+  \label{fig:kge_comp}
+\end{figure}
+
+\subsection{Skill$_{\mathrm{VP}}$ diagnostic}
+
+\begin{figure}[H]
+  \centering
+  % \includegraphics[width=0.9\linewidth]{../results/figures/skill_vp.pdf}
+  \caption{Skill$_{\mathrm{RMSE}}$ vs Skill$_{\mathrm{VP}}$.
+           Divergence between panels signals variance collapse.}
+  \label{fig:skill_vp}
+\end{figure}
+
+% ── 6. Discussion ─────────────────────────────────────────────────────────────
+\section{Discussion}\label{sec:discussion}
+
+[TODO: interpret rank reversals between Skill$_{\mathrm{RMSE}}$ and
+Skill$_{\mathrm{VP}}$; discuss practical implications for model selection;
+limitations of the framework]
+
+% ── 7. Conclusion ─────────────────────────────────────────────────────────────
+\section{Conclusion}\label{sec:conclusion}
+
+[TODO]
+
+% ── References ────────────────────────────────────────────────────────────────
+\bibliographystyle{elsarticle-num}
+\bibliography{references}
+
+\end{document}

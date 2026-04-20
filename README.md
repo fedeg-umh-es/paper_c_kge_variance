@@ -67,3 +67,24 @@ python3 experiments/run_paper_c_baseline.py
 Executing the baseline script will automatically generate the following diagnostic artifacts in the `results/` directory:
 - `results/metrics_baseline_by_horizon.csv`: Tabular overview mapping all metrics (RMSE, Skill, VR, KGE components) per station and horizon.
 - `results/predictions_baseline.csv`: Raw out-of-sample persistence predictions logged alongside the true ground values.
+
+## Overleaf / LaTeX Artifacts
+
+The repository ships the final LaTeX artifacts for Paper C so the
+manuscript can be assembled directly on Overleaf, with no dynamic CSV
+reading or placeholders. They are regenerated from the closed experiment
+outputs under `results/` by a presentation-only script:
+
+```bash
+python3 experiments/export_paper_c_latex_artifacts.py
+```
+
+The script writes:
+
+- `paper/tables.tex` — main (`tab:core`) and appendix (`tab:appendix`) tables
+- `paper/results_snippets.tex` — count macros, commented Results paragraph, and figure blocks (`fig:rmse`, `fig:alpha`)
+- `paper/README_ARTIFACTS.md` — Overleaf upload and `\input{...}` instructions
+- `paper/figures/fig_paper_c_rmse_skill.png`, `paper/figures/fig_paper_c_alpha_vr.png`
+
+No model is retrained; the step only reshapes existing CSVs into LaTeX
+and copies the existing figures.

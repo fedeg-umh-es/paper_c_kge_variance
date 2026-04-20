@@ -72,7 +72,25 @@ python3 experiments/run_paper_c_lightgbm.py
 
 # 6. Build the LightGBM-vs-persistence summary table and automatic findings
 python3 experiments/build_paper_c_lightgbm_summary.py
+
+# 7. Build the master three-way comparison package (Paper C final outputs)
+python3 experiments/build_paper_c_master_comparison.py
 ```
+
+### Paper C final outputs
+
+`build_paper_c_master_comparison.py` is the single entry point for the
+results section. It requires steps 1–6 to have been run first and
+produces:
+
+| File | Use |
+|------|-----|
+| `results/paper_c_table_core.csv` | **Paper body** — compact table with RMSE, Skill, alpha, VR, KGE, Skill_VP per model and horizon |
+| `results/paper_c_table_appendix.csv` | **Appendix** — full wide table with all metrics and derived diagnostic flags |
+| `results/paper_c_master_comparison.csv` | Complete merged dataset with all flags (machine-readable) |
+| `results/paper_c_main_findings.txt` | Auto-generated narrative summary (global counts, per-station breakdown, ARIMA vs LightGBM section) |
+| `results/fig_paper_c_rmse_skill.png` | RMSE-by-horizon line chart per station (three models) |
+| `results/fig_paper_c_alpha_vr.png` | KGE alpha-by-horizon chart per station (ARIMA vs LightGBM, with collapse thresholds) |
 
 The ARIMA experiment uses the same rolling-origin protocol as the persistence
 baseline (identical folds, identical train-only logic, identical horizons
@@ -99,6 +117,16 @@ Executing the baseline scripts will automatically generate the following diagnos
 - `results/predictions_arima.csv`: Per-fold ARIMA point forecasts with the matching persistence forecast and true value on each row.
 - `results/paper_c_arima_vs_persistence_summary.csv`: Wide-format side-by-side table merging the persistence and ARIMA metrics by `(station, horizon)` with derived flags (`delta_rmse`, `better_than_persistence`, `variance_collapse_flag`, `severe_variance_collapse_flag`, `overdispersion_flag`).
 - `results/paper_c_arima_key_findings.txt`: Short auto-generated per-station reading highlighting where ARIMA improves RMSE, where variance collapses, where both happen simultaneously, and where ARIMA adds no skill.
+- `results/metrics_lightgbm_by_horizon.csv`: Same metric schema, computed for the rolling-origin LightGBM model.
+- `results/predictions_lightgbm.csv`: Per-fold LightGBM point forecasts with the matching persistence forecast and true value.
+- `results/paper_c_lightgbm_vs_persistence_summary.csv`: Wide-format side-by-side table merging persistence and LightGBM metrics by `(station, horizon)` with derived diagnostic flags.
+- `results/paper_c_lightgbm_key_findings.txt`: Auto-generated per-station reading for the LightGBM experiment.
+- `results/paper_c_master_comparison.csv`: Full three-way merged dataset (all metrics + all derived flags).
+- `results/paper_c_table_core.csv`: Compact table for the **paper body** — use this for the Results section.
+- `results/paper_c_table_appendix.csv`: Extended table for the **appendix** — all metrics and flags.
+- `results/paper_c_main_findings.txt`: Auto-generated narrative covering global counts, per-station breakdowns, and ARIMA vs LightGBM comparison.
+- `results/fig_paper_c_rmse_skill.png`: RMSE comparison figure (three models × all horizons × all stations).
+- `results/fig_paper_c_alpha_vr.png`: KGE alpha comparison figure with collapse threshold lines.
 - `results/metrics_lightgbm_by_horizon.csv`: Same metric schema, computed for the rolling-origin LightGBM model.
 - `results/predictions_lightgbm.csv`: Per-fold LightGBM point forecasts with the matching persistence forecast and true value.
 - `results/paper_c_lightgbm_vs_persistence_summary.csv`: Wide-format side-by-side table merging persistence and LightGBM metrics by `(station, horizon)` with derived diagnostic flags.

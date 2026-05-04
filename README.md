@@ -67,3 +67,29 @@ python3 experiments/run_paper_c_baseline.py
 Executing the baseline script will automatically generate the following diagnostic artifacts in the `results/` directory:
 - `results/metrics_baseline_by_horizon.csv`: Tabular overview mapping all metrics (RMSE, Skill, VR, KGE components) per station and horizon.
 - `results/predictions_baseline.csv`: Raw out-of-sample persistence predictions logged alongside the true ground values.
+
+## LightGBM Capacity Robustness Experiment
+
+This experiment evaluates whether the RMSE/structural-fidelity decoupling pattern
+changes as LightGBM model capacity is varied.  Three fixed configurations are
+compared (`lgbm_small`, `lgbm_base`, `lgbm_large`) under the same rolling-origin
+protocol, using identical features, lags, and dataset.
+
+### Running the sweep
+
+```bash
+# Step 1: run the three-configuration sweep
+python experiments/run_paper_c_lightgbm_capacity_sweep.py
+
+# Step 2: generate the summary table, findings text, and figure
+python experiments/build_paper_c_lightgbm_capacity_summary.py
+```
+
+### Generated files
+
+| File | Description |
+|------|-------------|
+| `results/metrics_lightgbm_capacity_sweep.csv` | Full metric table (station × model × horizon) |
+| `results/paper_c_lightgbm_capacity_summary.csv` | Compact comparison focused on RMSE, Skill_RMSE, kge_alpha, VR, Skill_VP |
+| `results/paper_c_lightgbm_capacity_findings.txt` | Auto-generated academic summary of capacity trade-off analysis |
+| `results/fig_paper_c_lgbm_capacity_alpha_rmse.png` | Bar chart comparing RMSE and KGE alpha across configurations, stations, and horizons |

@@ -18,8 +18,14 @@ class LGBMModel:
     ----------
     n_estimators:
         Number of boosting rounds per horizon model.
+    num_leaves:
+        Maximum number of leaves per tree (LightGBM default: 31).
     max_depth:
-        Maximum tree depth.
+        Maximum tree depth (-1 = unlimited).
+    learning_rate:
+        Boosting learning rate.
+    n_jobs:
+        Number of parallel threads.
     n_lags:
         Number of autoregressive lag features (lags 1 … n_lags).
     horizons:
@@ -29,12 +35,18 @@ class LGBMModel:
     def __init__(
         self,
         n_estimators: int = 100,
+        num_leaves: int = 31,
         max_depth: int = 6,
+        learning_rate: float = 0.1,
+        n_jobs: int = 1,
         n_lags: int = 24,
         horizons: list[int] | None = None,
     ) -> None:
         self.n_estimators = n_estimators
+        self.num_leaves = num_leaves
         self.max_depth = max_depth
+        self.learning_rate = learning_rate
+        self.n_jobs = n_jobs
         self.n_lags = n_lags
         self.horizons = sorted(horizons or [1, 6, 12, 24])
         self._models: dict[int, lgb.Booster] = {}
@@ -67,7 +79,10 @@ class LGBMModel:
             X, y = self._make_features(values, h)
             params = {
                 "n_estimators": self.n_estimators,
+                "num_leaves": self.num_leaves,
                 "max_depth": self.max_depth,
+                "learning_rate": self.learning_rate,
+                "n_jobs": self.n_jobs,
                 "random_state": 42,
                 "verbosity": -1,
             }

@@ -67,3 +67,31 @@ python3 experiments/run_paper_c_baseline.py
 Executing the baseline script will automatically generate the following diagnostic artifacts in the `results/` directory:
 - `results/metrics_baseline_by_horizon.csv`: Tabular overview mapping all metrics (RMSE, Skill, VR, KGE components) per station and horizon.
 - `results/predictions_baseline.csv`: Raw out-of-sample persistence predictions logged alongside the true ground values.
+
+## Overleaf / LaTeX Artifacts
+
+The repository ships a presentation-only step that turns the real
+experiment outputs into the LaTeX artifacts uploaded to Overleaf. It
+reads exclusively from:
+
+- `results/tables/baseline_results.csv` (rows with `model in {persistence, arima}`, written by `experiments/run_baseline.py`)
+- `results/tables/lgbm_results.csv` (rows with `model = lgbm`, written by `experiments/run_lgbm.py`)
+
+Regenerate the artifacts with:
+
+```bash
+python3 experiments/run_baseline.py
+python3 experiments/run_lgbm.py
+python3 experiments/export_paper_c_latex_artifacts.py
+```
+
+The export script writes:
+
+- `paper/tables.tex` — `tab:core` and `tab:appendix`, every value drawn from the merged real frame
+- `paper/results_snippets.tex` — six count macros computed from the real frame (no hardcoding) plus an audit comment block, the figure blocks (`fig:rmse`, `fig:alpha`), and a commented Results paragraph
+- `paper/README_ARTIFACTS.md` — upload list and `\input{...}` instructions
+- `paper/figures/fig_paper_c_rmse_skill.png`, `paper/figures/fig_paper_c_alpha_vr.png` — generated in-process from the real CSVs
+
+No model is retrained. If either real input is missing or required model
+rows are absent, the export step aborts with an explicit error and
+writes nothing.

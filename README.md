@@ -67,3 +67,36 @@ python3 experiments/run_paper_c_baseline.py
 Executing the baseline script will automatically generate the following diagnostic artifacts in the `results/` directory:
 - `results/metrics_baseline_by_horizon.csv`: Tabular overview mapping all metrics (RMSE, Skill, VR, KGE components) per station and horizon.
 - `results/predictions_baseline.csv`: Raw out-of-sample persistence predictions logged alongside the true ground values.
+
+## LightGBM Capacity-Sweep Robustness Experiment
+
+To assess whether the RMSE / structural-fidelity decoupling reported in
+Paper C is sensitive to model capacity, three fixed LightGBM
+configurations (`lgbm_small`, `lgbm_base`, `lgbm_large`) are evaluated on
+the exact same rolling-origin protocol, dataset, stations, horizons and
+metrics. Only model capacity is varied — features, lags, dataset and
+splits are held constant.
+
+```bash
+# 1. Run the three configurations across all stations and horizons
+python3 experiments/run_paper_c_lightgbm_capacity_sweep.py
+
+# 2. Build the compact comparison table, the findings note and the figure
+python3 experiments/build_paper_c_lightgbm_capacity_summary.py
+```
+
+Generated artifacts:
+- `results/metrics_lightgbm_capacity_sweep.csv`: long-format metrics
+  (`station`, `model`, `horizon`, `rmse_model`, `rmse_persistence`,
+  `skill_rmse`, `vr`, `kge`, `kge_r`, `kge_alpha`, `kge_beta`,
+  `skill_vp`) for the three configurations.
+- `results/paper_c_lightgbm_capacity_summary.csv`: compact
+  station × horizon × configuration table focused on `rmse_model`,
+  `skill_rmse`, `kge_alpha`, `vr`, `skill_vp`.
+- `results/paper_c_lightgbm_capacity_findings.txt`: automatically
+  generated reading (best-RMSE and lowest-`alpha` configuration per
+  horizon, global counts of `lgbm_large` vs `lgbm_small`, and a sober
+  trade-off note).
+- `results/fig_paper_c_lgbm_capacity_alpha_rmse.png`: matplotlib figure
+  comparing RMSE and `kge_alpha` per station and horizon across the
+  three configurations.

@@ -24,6 +24,16 @@ class LGBMModel:
         Number of autoregressive lag features (lags 1 … n_lags).
     horizons:
         Forecast horizons; a separate model is trained for each.
+    num_leaves:
+        Maximum number of leaves per tree. ``None`` falls back to the
+        LightGBM default (31).
+    learning_rate:
+        Boosting shrinkage. ``None`` keeps the LightGBM default (0.1).
+    n_jobs:
+        Threads per booster. Defaults to 1 to keep runs deterministic on
+        small machines.
+    random_state:
+        Seed propagated to LightGBM for reproducibility.
     """
 
     def __init__(
@@ -32,11 +42,19 @@ class LGBMModel:
         max_depth: int = 6,
         n_lags: int = 24,
         horizons: list[int] | None = None,
+        num_leaves: int | None = None,
+        learning_rate: float | None = None,
+        n_jobs: int = 1,
+        random_state: int = 42,
     ) -> None:
         self.n_estimators = n_estimators
         self.max_depth = max_depth
         self.n_lags = n_lags
         self.horizons = sorted(horizons or [1, 6, 12, 24])
+        self.num_leaves = num_leaves
+        self.learning_rate = learning_rate
+        self.n_jobs = n_jobs
+        self.random_state = random_state
         self._models: dict[int, lgb.Booster] = {}
 
     def _make_features(
@@ -68,9 +86,14 @@ class LGBMModel:
             params = {
                 "n_estimators": self.n_estimators,
                 "max_depth": self.max_depth,
-                "random_state": 42,
+                "random_state": self.random_state,
+                "n_jobs": self.n_jobs,
                 "verbosity": -1,
             }
+            if self.num_leaves is not None:
+                params["num_leaves"] = self.num_leaves
+            if self.learning_rate is not None:
+                params["learning_rate"] = self.learning_rate
             model = lgb.LGBMRegressor(**params)
             model.fit(X, y)
             self._models[h] = model

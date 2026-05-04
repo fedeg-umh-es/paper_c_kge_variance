@@ -70,21 +70,28 @@ Executing the baseline script will automatically generate the following diagnost
 
 ## Overleaf / LaTeX Artifacts
 
-The repository ships the final LaTeX artifacts for Paper C so the
-manuscript can be assembled directly on Overleaf, with no dynamic CSV
-reading or placeholders. They are regenerated from the closed experiment
-outputs under `results/` by a presentation-only script:
+The repository ships a presentation-only step that turns the real
+experiment outputs into the LaTeX artifacts uploaded to Overleaf. It
+reads exclusively from:
+
+- `results/tables/baseline_results.csv` (rows with `model in {persistence, arima}`, written by `experiments/run_baseline.py`)
+- `results/tables/lgbm_results.csv` (rows with `model = lgbm`, written by `experiments/run_lgbm.py`)
+
+Regenerate the artifacts with:
 
 ```bash
+python3 experiments/run_baseline.py
+python3 experiments/run_lgbm.py
 python3 experiments/export_paper_c_latex_artifacts.py
 ```
 
-The script writes:
+The export script writes:
 
-- `paper/tables.tex` — main (`tab:core`) and appendix (`tab:appendix`) tables
-- `paper/results_snippets.tex` — count macros, commented Results paragraph, and figure blocks (`fig:rmse`, `fig:alpha`)
-- `paper/README_ARTIFACTS.md` — Overleaf upload and `\input{...}` instructions
-- `paper/figures/fig_paper_c_rmse_skill.png`, `paper/figures/fig_paper_c_alpha_vr.png`
+- `paper/tables.tex` — `tab:core` and `tab:appendix`, every value drawn from the merged real frame
+- `paper/results_snippets.tex` — six count macros computed from the real frame (no hardcoding) plus an audit comment block, the figure blocks (`fig:rmse`, `fig:alpha`), and a commented Results paragraph
+- `paper/README_ARTIFACTS.md` — upload list and `\input{...}` instructions
+- `paper/figures/fig_paper_c_rmse_skill.png`, `paper/figures/fig_paper_c_alpha_vr.png` — generated in-process from the real CSVs
 
-No model is retrained; the step only reshapes existing CSVs into LaTeX
-and copies the existing figures.
+No model is retrained. If either real input is missing or required model
+rows are absent, the export step aborts with an explicit error and
+writes nothing.
